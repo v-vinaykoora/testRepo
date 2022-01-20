@@ -3,21 +3,29 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- main
-
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+resources:
+  containers:
+    - container: _external_build_artifact # identifier for the container resource      
+      type: ACR # type of the registry like ACR, GCR etc. 
+      azureSubscription: 'Microsoft Azure Internal Consumption (daaeef3e-d7fe-49e8-baaa-b3df9d072825)' # Azure subscription (ARM service connection) for container registry;
+      resourceGroup: 'Wicresoft-Support' # resource group for your ACR
+      registry: 'gingacr' # registry for container images
+      repository: 'gingtest' # name of the container image repository in ACR
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
-- task: Docker@2
-  inputs:
-    command: 'buildAndPush'
-    Dockerfile: '**/Dockerfile'
+stages:
+- stage: deploy
+  jobs:
+  - deployment: DeployWeb
+    displayName: deploy Web App
+    pool:
+      vmImage: 'Ubuntu-latest'
+    # creates an environment if it doesn't exist
+    environment: 'TestACR'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo Hello world
